@@ -13,7 +13,7 @@ def calc_dens(wtemp):
     return dens
 
 ## python implementation of gotmtools::calc_cc
-def calc_cc(date, airt,  swr, lat, lon, elev,  relh = None, dewt = None,daily = False): 
+def calc_cc(date, airt,  swr, lat, lon, elev,  relh = None, dewt = None, daily = False): 
     if daily == True:
         date = pd.date_range(start=date[0], end=(date.iloc[-1] + timedelta(hours=23)), freq='1H') 
     yday = date.dt.dayofyear.values 
@@ -79,7 +79,7 @@ def calc_cc(date, airt,  swr, lat, lon, elev,  relh = None, dewt = None,daily = 
         df['DateTime'] = df.DateTime.dt.date
         dfd = df.groupby(['DateTime'])['Ho'].mean()
         df = dfd.reset_index()
-    df['swr'] = swr
+    df['swr'] = swr.values
     df['ccsim'] = np.nan
     
     df.loc[df.Ho >= df.swr, "ccsim"] = ((1 - (df['swr']/df['Ho'])) / 0.65).apply(np.sqrt)

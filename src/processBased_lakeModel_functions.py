@@ -1120,7 +1120,7 @@ def heating_module(
     else:
         H =  (1- albedo) * (Jsw )  * np.exp(-(kd_light ) * depth)
     
-    Hg = (area[:-1]-area[1:])/dx * Hgeo/(4181 * calc_dens(un[0]))
+    Hg = (area[:-1]-area[1:])/dx * Hgeo/(4184 * calc_dens(un[0]))
     
     Hg = np.append(Hg, Hg.min())
 
@@ -1138,20 +1138,30 @@ def heating_module(
     # # u[(nx-1)] = un[(nx-1)] + ( H[nx-1] * area[(nx-1)]/(area[(nx-1)] ) * 1/(4181 * calc_dens(un[(nx-1)])) + Hg[(nx-1)]/area[(nx-1)]) * dt
     # u[(nx-1)] = un[(nx-1)] + ( (H[nx-2] - H[nx-1])/dx * area[(nx-1)] * 1/(4181 * calc_dens(un[(nx-1)]))/area[(nx-1)] + Hg[(nx-1)]/(area[(nx-1)])) * dt
 
+    Qsw = np.zeros(nx)
+
+
 
 
      # --> RL change
     u[0] = (un[0] + 
-         ((Q * area[0])/(4184 * calc_dens(un[0]) * volume[0]) + ((H[0] * area[0]- H[0+1] * area[0+1]) )/(4184 * calc_dens(un[0]) * volume[0] ) + 
-           ((area[0]* Hgeo - area[0+1]* Hgeo))/(4184 * calc_dens(un[0]) * volume[0])) * dt)
+         ((Q * area[0])/(4184 * calc_dens(un[0]) * volume[0])) * dt) #((H[0] * area[0]- H[0+1] * area[0+1]) )/(4184 * calc_dens(un[0]) * volume[0] ) +
+          # ((area[0]* Hgeo - area[0+1]* Hgeo))/(4184 * calc_dens(un[0]) * volume[0])
+          # ) * dt)
        # all layers in between
-    for i in range(1,(nx-1)):
-           u[i] = un[i] + ( ( (H[i] * area[i]- H[i+1] * area[i+1]))/(4184 * calc_dens(un[i]) * volume[i] ) + 
-               ((area[i]* Hgeo - area[i+1] * Hgeo))/(4184 * calc_dens(un[i]) * volume[i]))* dt
+    for i in range(0,(nx)):
+           
+           Qsw[i] = kd_light * (1 - albedo) * Jsw * np.exp(-kd_light * depth[i])
+           u[i] += (Qsw[i] / (calc_dens(un[i]) * 4184)) * dt
+
+           #u[i] = u[i] + ( #( (H[i] * area[i]- H[i+1] * area[i+1]))/(4184 * calc_dens(un[i]) * volume[i] ) + 
+           #    ((area[i]* Hgeo - area[i+1] * Hgeo))/(4184 * calc_dens(u[i]) * volume[i]))* dt
        # bottom layer
-    u[(nx-1)] = un[(nx-1)] +( ( (H[nx-2] * area[nx-2]- H[nx-1] * area[nx-1]) )/(4184 * calc_dens(un[nx-1]) * volume[nx-1] ) + 
-           ((area[nx-2]* Hgeo - area[nx-1]* Hgeo))/(4184 * calc_dens(un[nx-1]) * volume[nx-1]))* dt
-     
+    #u[(nx-1)] = u[(nx-1)] +( #( (H[nx-2] * area[nx-2]- H[nx-1] * area[nx-1]) )/(4184 * calc_dens(un[nx-1]) * volume[nx-1] ) + 
+    #       ((area[nx-2]* Hgeo - area[nx-1]* Hgeo))/(4184 * calc_dens(u[nx-1]) * volume[nx-1]))* dt
+    # bottom cell only
+    u[-1] += (Hgeo / (calc_dens(un[-1]) * 4184 * dx)) * dt
+ 
 
     end_time = datetime.datetime.now()
     #print("heating: " + str(end_time - start_time))
@@ -2245,6 +2255,7 @@ def prodcons_module_woDOCL(
         d[3,3] = (pocrn * resp_pocr * consumption) #POCr consumption
         d[4,4] = (pocln * resp_pocl * consumption) #POCl consumption
         
+        #breakpoint()
         # p = [[carbon_oxygen * npp, 0, 0, 0, 0], # O2 1   [[0, 0, 0, 0, 0, algn * npp * 32/12, 0], o2 production from npp
         #  [0, 0, 0,  (pocrn * resp_pocr * consumption), 0], # DOC-R 2 from POCr respiration
         #  [0, 0, 0, 0, (pocln * resp_pocl * consumption) + 0.2 * npp,], # DOC-L 3 from POCl resp and small npp term
@@ -2354,6 +2365,7 @@ def prodcons_module_woDOCL(
         # Something:
         r[:] = y[:, ci] + dt*p[eye]
     
+        #breakpoint()
         # Solve system of equation:
         y = np.linalg.solve(a, r)
         # breakpoint()
@@ -3913,7 +3925,7 @@ def mixing_module_minlake_RL(
         W_str = W_str
     tau = 1.225 * Cd * Uw ** 2 # wind shear is air density times wind velocity 
     
-    if (tau**3/ calc_dens(u[0])) <= 0:
+    if (tau**3/ calc_dens(u[0])) < 0:
         print('Like, what?')
         breakpoint()
     
@@ -4190,8 +4202,8 @@ def run_wq_model(
   timelabels = None,
   atm_flux=None, 
   lake_num = 1,
-  f_sod = 1e-2,
-  d_thick = 0.001,
+  f_sod = 1E-6, 
+  d_thick = 0.01,
   LIGHTUSEBYPHOTOS = 0.3,
   beta = 0.8
   ):
@@ -4519,6 +4531,7 @@ def run_wq_model(
     ## (2) DIFFUSION
     #breakpoint()
     
+    #breakpoint()
     # --> RL change from diffusion_module to diffusion_module_dAdK
     diffusion_res = diffusion_module_dAdK_v2(
         un = u,
@@ -4595,6 +4608,8 @@ def run_wq_model(
     
     pocr_diff[:, idn] = pocr
     pocl_diff[:, idn] = pocl
+
+    #breakpoint()
     
     # --> RL change
     # if np.max(u) > 26:
@@ -4668,7 +4683,7 @@ def run_wq_model(
 
     #breakpoint()
     
-    
+    #breakpoint()
     ## (WQ2) PRODUCTION CONSUMPTION
     # --> RL change to prodcons_module_woDOCL() from prodcons_module()
     prodcons_res = prodcons_module_woDOCL(

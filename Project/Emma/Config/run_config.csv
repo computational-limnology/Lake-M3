@@ -1,0 +1,16 @@
+var,Lake1
+start_time,06/30/2016 18:00
+end_time,08/30/2016 12:00:00 AM
+nx,50
+dt,3600
+dx,0.5
+pgdl_mode,on
+training_data_path,../output
+diffusion_method,pacanowskiPhilander
+scheme,implicit
+u_ini_file,observedTemp.txt
+wq_ini_file,mendota_driver_data_v3.csv
+tp_ini_file,Mendota_observations_tp_2.csv
+oc_load_file,oc_load_file.csv
+hypso_ini_file,bathymetry.csv
+meteo_ini_file,ME_nldas-16-24.csv

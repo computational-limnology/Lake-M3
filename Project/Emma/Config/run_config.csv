@@ -1,16 +1,16 @@
-var,Lake1
-start_time,06/30/2016 18:00
-end_time,08/30/2016 12:00:00 AM
-nx,50
-dt,3600
-dx,0.5
-pgdl_mode,on
-training_data_path,../output
-diffusion_method,pacanowskiPhilander
-scheme,implicit
-u_ini_file,observedTemp.txt
-wq_ini_file,mendota_driver_data_v3.csv
-tp_ini_file,Mendota_observations_tp_2.csv
-oc_load_file,oc_load_file.csv
-hypso_ini_file,bathymetry.csv
-meteo_ini_file,ME_nldas-16-24.csv
+var,Lake1,Lake2
+start_time,06/30/2016 18:00,06/30/2020 18:00
+end_time,08/30/2022 12:00:00 AM,8/30/2020 12:00:00 AM
+nx,50,50
+dt,3600,3600
+dx,0.5,0.5
+pgdl_mode,on,on
+training_data_path,None,None
+diffusion_method,pacanowskiPhilander,pacanowskiPhilander
+scheme,implicit,implicit
+u_ini_file,observedTemp.txt,observedTemp.txt
+wq_ini_file,mendota_driver_data_v3.csv,mendota_driver_data_v3.csv
+tp_ini_file,Mendota_observations_tp_2.csv,Mendota_observations_tp_2.csv
+oc_load_file,oc_load_file.csv,oc_load_file2.csv
+hypso_ini_file,bathymetry.csv,bathymetry.csv
+meteo_ini_file,ME_nldas-16-24.csv,ME_nldas-16-24.csv

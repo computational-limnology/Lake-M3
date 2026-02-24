@@ -76,6 +76,22 @@ def melt_var(var, times, depth, name):
 
     return df_long
 
+def get_plot_depths(config, lake_key, varname):
+    surf_key=f"surf_depth_{varname}"
+    deep_key=f"deep_depth_{varname}"
+    
+    if surf_key not in config.index:
+        raise KeyError(f"Missing config key: {surf_key}")
+
+    if deep_key not in config.index:
+        raise KeyError(f"Missing config key: {deep_key}")
+
+    surf_depth = float(config.loc[surf_key, lake_key])
+    deep_depth = float(config.loc[deep_key, lake_key])
+
+    return surf_depth, deep_depth
+    
+    
 def post_process(
     res,
     times,
@@ -110,12 +126,12 @@ def post_process(
     doc_total = docl + docr
     poc_total = pocl + pocr
     
-    surf_depth = float(get_value(postprocess_config, lake_key, "surf_depth")) #***
-    deep_depth = float(get_value(postprocess_config, lake_key, "deep_depth"))
+    # surf_depth = float(get_value(postprocess_config, lake_key, "surf_depth")) #***
+    # deep_depth = float(get_value(postprocess_config, lake_key, "deep_depth"))
 
 
-    surf_ix = depth_to_index(depth, surf_depth)
-    deep_ix = depth_to_index(depth, deep_depth)
+    # surf_ix = depth_to_index(depth, surf_depth)
+    # deep_ix = depth_to_index(depth, deep_depth)
 
     df_obs = load_observations(
         observations_dir, postprocess_config, lake_key,
@@ -187,6 +203,12 @@ def post_process(
         heatmap_plot(o2 / volume[:, None], res["temp"], "o2_heat", vmin=0, vmax=20)
 
     if is_on(postprocess_config, lake_key, "o2_line"):
+        #Get depth for graphing
+        surf_depth, deep_depth = get_plot_depths(postprocess_config, lake_key, "do")
+        surf_ix = depth_to_index(depth, surf_depth)
+        deep_ix = depth_to_index(depth, deep_depth)
+        
+        #Plotting
         fig, ax = plt.subplots(figsize=(10,5))
         ax.plot(times, o2[surf_ix,:]/volume[surf_ix],color='blue',linestyle='solid',label=f"{int(surf_depth)}m Modeled DO")
         ax.plot(times, o2[deep_ix,:]/volume[deep_ix],color='blue',linestyle='dashed',label=f"{int(deep_depth)}m Modeled DO")
@@ -236,6 +258,13 @@ def post_process(
     #     save_fig(fig, lake_output_dir, lake_key, "wtemp_line")
         
     if is_on(postprocess_config, lake_key, "wtemp_line"):
+        
+        #Get depth for plotting
+        surf_depth, deep_depth = get_plot_depths(postprocess_config, lake_key, "wtemp")
+        surf_ix = depth_to_index(depth, surf_depth)
+        deep_ix = depth_to_index(depth, deep_depth)
+        
+        #Plotting
         fig, ax = plt.subplots(figsize=(10,5))
         ax.plot(times,  temp[surf_ix,:],color='blue',linestyle='solid',label=f"{int(surf_depth)}m Modeled Temp")
         ax.plot(times,  temp[deep_ix,:],color='blue',linestyle='dashed',label=f"{int(deep_depth)}m Modeled Temp")
@@ -282,6 +311,14 @@ def post_process(
         "pocl": pocl,
         "poctot": poc_total
     }
+    
+    depth_group={
+        'docl':'doctot',
+        'docr':'doctot',
+        'doctot':'doctot',
+        'pocl':'poctot',
+        'pocr':'poctot',
+        'poctot':'poctot'}
 
     for varname, var in variables.items():
 
@@ -289,7 +326,14 @@ def post_process(
             heatmap_plot(var/volume[:,None],res["temp"], f"{varname}_heat", vmin=0, vmax=5)
 
         if is_on(postprocess_config, lake_key, f"{varname}_line"):
-
+            
+            #Get depths for plotting
+            group_name=depth_group[varname]
+            surf_depth, deep_depth = get_plot_depths(postprocess_config, lake_key, group_name)
+            surf_ix = depth_to_index(depth, surf_depth)
+            deep_ix = depth_to_index(depth, deep_depth)
+            
+            #plotting
             fig, ax = plt.subplots(figsize=(10,5))
             ax.plot(
                 times,
@@ -305,15 +349,15 @@ def post_process(
                 linestyle="dashed",
                 label=f"{int(deep_depth)}m Modeled")
 
-            if df_obs is not None:
-                if varname=="doctot":
-    
+            if df_obs is not None and varname in ["doctot","poctot"]:
+                    obs_var='doc' if varname =='doctot' else "poc"
+                    
                     df_obs_surf = df_obs[
-                        (df_obs["variable"] == "doc") &
+                        (df_obs["variable"] == obs_var) &
                         (df_obs["depth"] == surf_depth)]
         
                     df_obs_deep = df_obs[
-                        (df_obs["variable"] == "doc") &
+                        (df_obs["variable"] == obs_var) &
                         (df_obs["depth"] == deep_depth)]
         
                     if not df_obs_surf.empty:
@@ -483,8 +527,61 @@ def post_process(
                 vmin=-v,
                 vmax=v
             )
-            
-#FM_ Lake file
+
+#Driver_panel graphs
+
+    #Get driver variables at 1m
+    target_depth = 1.0
+    ix_1m = depth_to_index(depth, target_depth)
+    temp_1m = temp[ix_1m, :] 
+    npp_1m = npp[ix_1m, :] / volume[ix_1m]
+    do_1m  = o2[ix_1m, :] / volume[ix_1m]
+    doc_1m = doc_total[ix_1m, :] / volume[ix_1m]
+    poc_1m = poc_total[ix_1m, :] / volume[ix_1m]
+    light = meteo_all['Shortwave_Radiation_Downwelling_wattPerMeterSquared']   
+    tp = res.get("TP", np.zeros_like(light)).flatten()
+    tp=tp*1000 # convert mg/L -> ug/L
+    
+    print("light:", light.shape)
+    print("temp:", temp_1m.shape)
+    print("tp:", tp.shape)
+    print("npp:", npp_1m.shape)
+    print("TPm keys check:", "TP" in res)
+
+    if "TPm" in res:
+        print("TPm stats:", np.nanmin(res["TPm"]), np.nanmax(res["TPm"]))
+        print("TPm shape:", np.shape(res["TPm"]))
+    
+    def plot_driver_panels(light, temp, tp, response, ylabel, fname):
+
+        fig, ax = plt.subplots(3, 1, figsize=(6, 10))   
+        ax[0].scatter(light, response, alpha=0.4)
+        ax[0].set_xlabel("Shortwave (W/m2)")
+        ax[0].set_ylabel(ylabel)    
+        ax[1].scatter(temp, response, alpha=0.4)
+        ax[1].set_xlabel("Temperature (°C)")
+        ax[1].set_ylabel(ylabel)    
+        ax[2].scatter(tp, response, alpha=0.4)
+        ax[2].set_xlabel("TP (ug/L)")
+        ax[2].set_ylabel(ylabel)    
+        plt.tight_layout()
+        save_fig(fig, lake_output_dir, lake_key, fname)
+        
+        
+    if is_on(postprocess_config, lake_key, 'npp_driver_panels'):
+        plot_driver_panels(light, temp_1m, tp, npp_1m, "NPP", "npp_driver_panels")
+    
+    if is_on(postprocess_config, lake_key, 'do_driver_panels'):
+        plot_driver_panels(light, temp_1m, tp, do_1m, "DO (mg/L)", "do_driver_panels")
+        
+    if is_on(postprocess_config, lake_key, 'doc_driver_panels'):
+        plot_driver_panels(light, temp_1m, tp, doc_1m, "DOC (mg/L)", "doc_driver_panels")
+    
+    if is_on(postprocess_config, lake_key, 'poc_driver_panels'):
+        plot_driver_panels(light, temp_1m, tp, poc_1m, "POC (mg/L)", "poc_driver_panels")
+
+
+#FM_ Lake files
 
 
     if (is_on(postprocess_config, lake_key, "fm_lake_hourly") or
@@ -542,7 +639,7 @@ def post_process(
             "median_Ten_Meter_Elevation_Wind_Speed_meterPerSecond": meteo[12, :],
             "sum_Precipitation_millimeterPerDay": meteo[15, :],
             "Water_Secchi_m": secchi.flatten(),
-            "TP_load_g_per_d": TPm.flatten(),})
+            "TP_load_ug_per_L": TPm.flatten(),})
     
         #hourly
         if is_on(postprocess_config, lake_key, "fm_driver_hourly"):
@@ -554,9 +651,9 @@ def post_process(
             sum_vars = [
                 "sum_Longwave_Radiation_Downwelling_wattPerMeterSquared",
                 "sum_Precipitation_millimeterPerDay",
-                "TP_load_g_per_d",
-                "TOC_load_g_per_d",
-                "Discharge_m3_per_d"]
+                "TP_load_ug_per_L"]
+                # "TOC_load_g_per_d",
+                # "Discharge_m3_per_d"]
     
             median_vars = [
                 "Shortwave_Wm2",

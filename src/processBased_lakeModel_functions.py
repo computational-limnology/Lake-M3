@@ -1952,9 +1952,9 @@ def prodcons_module_woDOCL(
 
         P_I = p_max * (1 - exp(- (alpha_P*prop_I_npp) * PAR/p_max)) # mol C/m2/s
 
-        k_TP_mg = k_TP * 1000 # mg/L
+        k_TP_ug = k_TP * 1000 # mg/L -> ug/L
 
-        f_TP = TP / (k_TP_mg + TP) # dimensionless
+        f_TP = TP / (k_TP_ug + TP) # dimensionless TP in ug/L values
 
         temp =  theta_npp**(u - 20) 
 

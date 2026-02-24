@@ -32,6 +32,8 @@ def get_value(config, lake_key, key):
 
 def depth_to_index(depth_array, target_depth):
     depth_array = np.asarray(depth_array)
+    offset=(depth_array[1]-depth_array[0])/2 # adjusts for the 0.25m off set
+    physical_depth=depth_array-offset
     return np.abs(depth_array - target_depth).argmin()
 
 
@@ -125,7 +127,7 @@ def post_process(
 
     doc_total = docl + docr
     poc_total = pocl + pocr
-    
+   
     # surf_depth = float(get_value(postprocess_config, lake_key, "surf_depth")) #***
     # deep_depth = float(get_value(postprocess_config, lake_key, "deep_depth"))
 

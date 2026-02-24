@@ -147,11 +147,11 @@ def get_hypsography(hypsofile, dx, nx, outflow_depth=None):
   # volume = np.append(volume, 1000)
   
   volume = volume[:-1]
-  depth = 1/2 * (depth[:-1] + depth[1:])
+  depth = 1/2 * (depth[:-1] + depth[1:]) #puts depths at layer centers
   area = 1/2 * (area[:-1] + area[1:])
   
   if outflow_depth is not None:
-      mask=depth<=(outflow_depth+0.25) #depths off set by 0.25m, corrects for difference
+      mask=depth<=(outflow_depth)
       hypso_weight= np.zeros_like(volume)
       total_volume=np.sum(volume[mask])
       hypso_weight[mask]=volume[mask]/total_volume

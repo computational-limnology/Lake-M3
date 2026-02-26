@@ -17,11 +17,11 @@ import sys
 #******To use: set main directory and change lake_dir path for desired Project
 
 # os.chdir("/Users/emmamarchisin/Desktop/Research/Code/1D-AEMpy-UW-metabolism-EM/src")
-os.chdir("/Users/emmamarchisin/Desktop/Research/Code/Lake-m3/src")
+os.chdir("/Users/emmamarchisin/Desktop/Research/Code/Lake-M3/src")
 # os.chdir('/Users/paul/Dropbox/Hanson/MyModels/1D-AEMpy-UW-metabolism-EM/src')
 # os.chdir('/Users/au740615/Documents/projects/1D-AEMpy-UW-metabolism-EM/src')
 
-lake_dir=Path('../Project/Emma')
+lake_dir=Path('../Project/Example-EM')
 
 config_dir=lake_dir/"Config"
 driver_dir=lake_dir/"Drivers"

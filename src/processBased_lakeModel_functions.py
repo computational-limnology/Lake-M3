@@ -1961,9 +1961,9 @@ def prodcons_module_woDOCL(
 
         P_I = p_max * (1 - exp(- (alpha_P*prop_I_npp) * PAR/p_max)) # mol C/m2/s
 
-        k_TP_mg = k_TP * 1000 # mg/L
+        
 
-        f_TP = TP / (k_TP_mg + TP) # dimensionless
+        f_TP = TP / (k_TP + TP) # dimensionless TP in mg/L values, converted in model_setup provide_phos, k_TP in mg/L 
 
         temp =  theta_npp**(u - 20) 
 
@@ -4672,6 +4672,7 @@ def run_wq_model(
                'ko2_backcalc': ko2_calcm,
                'atm_flux_output':atm_flux_output,
                'atm_flux':atm_flux,
+               'TP':TPm
                }
 
   if training_data_path is not None and not pd.isna(training_data_path):

@@ -1,27 +1,27 @@
 #new
 import numpy as np
 import pandas as pd
-import os
+# import os
 #import scipy
-from math import pi, exp, sqrt
-from scipy.interpolate import interp1d
+# from math import pi, exp, sqrt
+# from scipy.interpolate import interp1d
 from copy import deepcopy
 import datetime
-import matplotlib.pyplot as plt
-import seaborn as sns
-from numba import jit
-from functools import reduce
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+# from numba import jit
+# from functools import reduce
 from pathlib import Path
-import sys
+# import sys
 
 #******To use: set main directory and change lake_dir path for desired Project
 
 # os.chdir("/Users/emmamarchisin/Desktop/Research/Code/1D-AEMpy-UW-metabolism-EM/src")
-os.chdir("/Users/emmamarchisin/Desktop/Research/Code/Lake-M3/src")
+# os.chdir("/Users/emmamarchisin/Desktop/Research/Code/Lake-M3/src")
 # os.chdir('/Users/paul/Dropbox/Hanson/MyModels/1D-AEMpy-UW-metabolism-EM/src')
 # os.chdir('/Users/au740615/Documents/projects/1D-AEMpy-UW-metabolism-EM/src')
 
-lake_dir=Path('../Project/Example-EM')
+lake_dir=Path('Project/Example-EM')
 
 config_dir=lake_dir/"Config"
 driver_dir=lake_dir/"Drivers"

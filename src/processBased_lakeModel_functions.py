@@ -7,13 +7,13 @@ from copy import deepcopy
 import datetime
 from ancillary_functions import calc_cc, buoyancy_freq, center_buoyancy
 import random 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+#import torch
+#import torch.nn as nn
+#import torch.nn.functional as F
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+#from sklearn.model_selection import train_test_split
+#from sklearn.preprocessing import StandardScaler
 from collections import OrderedDict
 from tqdm import tqdm
 import warnings
@@ -516,7 +516,7 @@ def provide_carbon(ocloadfile, startingDate, startTime):
     full_range = pd.date_range(
         start = oc_load['date'].min(), 
         end = oc_load['date'].max(),
-        freq = "H"
+        freq = "h"
     )
     expanded = pd.DataFrame({"datetime": full_range})
     expanded = expanded.merge(oc_load, on = "datetime", how = "left")
@@ -528,7 +528,7 @@ def provide_carbon(ocloadfile, startingDate, startTime):
     (oc_load['date'] >= startingDate) ]
     daily_oc['ditt'] = abs(daily_oc['date'] - startingDate)
 
-   
+    daily_oc.reset_index(drop=True, inplace=True)
 
     # If startingDate precedes data, insert an initial row
     if startingDate < daily_oc['date'].min():
@@ -2399,11 +2399,15 @@ def prodcons_module_woDOCL(
         # docr docl pocr pocl 
         mprk_res = solve_mprk(fun, y0 =  [o2n[dep], docrn[dep], docln[dep], pocrn[dep], pocln[dep]], dt = dt, dx = dx,
                resp = [resp_docr, resp_docl, resp_pocr, resp_pocl], theta_r = theta_r, u = u[dep],
-               volume = volume[dep], LIGHTUSEBYPHOTOS =LIGHTUSEBYPHOTOS, beta = beta, area = area[dep],k_half = k_half,
+               volume = volume[dep], LIGHTUSEBYPHOTOS=LIGHTUSEBYPHOTOS, beta = beta, area = area[dep],k_half = k_half,
                H = H[dep], sw_to_par = sw_to_par, IP_m = IP_m, TP = TP, theta_npp = theta_npp,
                kd_light = kd_light, depth = depth[dep], Jsw = H_in)
         o2[dep], docr[dep], docl[dep], pocr[dep], pocl[dep] = mprk_res[0]
-        docr_respiration[dep], docl_respiration[dep], pocr_respiration[dep], pocl_respiration[dep], npp_production[dep]= [mprk_res[1], mprk_res[2], mprk_res[3], mprk_res[4], mprk_res[5]]
+        docr_respiration[dep] = np.atleast_1d(mprk_res[1])[0]
+        docl_respiration[dep] = np.atleast_1d(mprk_res[2])[0]
+        pocr_respiration[dep] = np.atleast_1d(mprk_res[3])[0]
+        pocl_respiration[dep] = np.atleast_1d(mprk_res[4])[0]
+        npp_production[dep] = np.atleast_1d(mprk_res[5])[0]
 
 
     
@@ -3664,6 +3668,10 @@ def boundary_module_oxygen(
     # breakpoint()
   
     o2 = o2 - np.minimum(o2, do_consumption)
+
+    #print(do_consumption/A_sed)
+    #print(do_consumption)
+    #print(do_consumption/area)
     #breakpoint()
     # o2[(nx-1)] = o2[(nx-1)] - (f_sod + d_sod/d_thick * o2[nx-1]/volume[nx-1] * area[nx-1]) * dt * theta_r**(u[(nx-1)] - 20) 
     
@@ -3673,7 +3681,7 @@ def boundary_module_oxygen(
 
     end_time = datetime.datetime.now()
     #print("wq boundary flux: " + str(end_time - start_time))
-    
+    #breakpoint()
     dat = {'o2': o2,
            'atm_flux':atm_flux,
            'docr': docr,
@@ -3681,7 +3689,7 @@ def boundary_module_oxygen(
            'pocr': pocr,
            'pocl':pocl,
            'npp': -999,
-           'do_consumption': do_consumption}
+           'do_consumption': do_consumption.sum() / A_sed.sum() / dt *86400}
 
     
     return dat
@@ -4293,7 +4301,7 @@ def run_wq_model(
   thermo_depm = np.full([1,nCol], np.nan)
   energy_ratiom = np.full([1,nCol], np.nan)
   icem = np.full([1,nCol], np.nan)
-  doconsumptionm = np.full([nx, nCol], np.nan)
+  doconsumptionm = np.full([1,nCol], np.nan)
   TPm = np.full([1,nCol], np.nan)
 
   um_initial = np.full([nx, nCol], np.nan)
@@ -4546,7 +4554,7 @@ def run_wq_model(
     #for n in enumerate
     atm_flux_output[:,idn] = atm_flux
 
-    doconsumptionm[:, idn] = do_consumption
+    doconsumptionm[0, idn] = do_consumption
     o2_bc[:, idn] = o2
     docr_bc[:, idn] = docr
     docl_bc[:, idn] = docl

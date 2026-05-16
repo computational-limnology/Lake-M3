@@ -15,9 +15,9 @@ def calc_dens(wtemp):
 ## python implementation of gotmtools::calc_cc
 def calc_cc(date, airt,  swr, lat, lon, elev,  relh = None, dewt = None, daily = False): 
     if daily == True:
-        date = pd.date_range(start=date[0], end=(date.iloc[-1] + timedelta(hours=23)), freq='1H') 
+        date = pd.date_range(start=date[0], end=(date.iloc[-1] + timedelta(hours=23)), freq='1h') 
     yday = date.dt.dayofyear.values 
-    hour = date.dt.hour.values
+    hour = date.dt.hour.values.copy()
     hour[hour == 0] = 24
     std_mer = np.linspace(-90, 90, 13)
     Lsm = std_mer[np.argmin(abs(lon - std_mer))]

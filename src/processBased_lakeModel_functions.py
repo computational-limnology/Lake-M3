@@ -5037,6 +5037,9 @@ def run_wq_model(
                'ko2_backcalc': ko2_calcm,
                'atm_flux_output':atm_flux_output,
                'atm_flux':atm_flux,
+               'volume':volume,
+               'depth':depth,
+               'time':timelabels
                }
 
   if training_data_path is not None:
